@@ -36,10 +36,6 @@ public class AppStarter extends Application {
         previousWindow = window;
     }
 
-
-
-
-
 }
 
 

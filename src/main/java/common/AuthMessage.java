@@ -19,5 +19,4 @@ public class AuthMessage extends AbstractMessage {
         return password;
     }
 
-
 }

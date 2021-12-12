@@ -7,3 +7,4 @@ public interface Callback {
 
     void onReceive(AbstractMessage msg);
 }
+

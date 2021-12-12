@@ -36,3 +36,4 @@ public class SendFileMessage extends AbstractMessage {
         return lastPart;
     }
 }
+

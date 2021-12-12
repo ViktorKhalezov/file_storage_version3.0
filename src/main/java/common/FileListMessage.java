@@ -26,3 +26,4 @@ public class FileListMessage extends AbstractMessage {
         return folderName;
     }
 }
+

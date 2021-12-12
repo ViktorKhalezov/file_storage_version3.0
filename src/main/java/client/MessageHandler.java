@@ -5,7 +5,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 
-
 public class MessageHandler extends SimpleChannelInboundHandler<AbstractMessage>  {
 
     private final Callback callback;

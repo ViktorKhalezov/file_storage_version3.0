@@ -11,3 +11,4 @@ public class AuthResponse extends AbstractMessage {
         return auth;
     }
 }
+

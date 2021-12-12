@@ -1,5 +1,6 @@
 package client;
 
+import common.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -10,30 +11,30 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 
 @Slf4j
 public class ClientNet {
     private SocketChannel channel;
-   private Callback callback;
-   private String message;
-    private MessageHandler messageHandler;
+    private Callback callback;
     private static ClientNet clientNet;
-    private PipedInputStream pis;
-    private final byte[] buf;
     private static ArrayList<String> serverFileList;
     private static boolean authorized;
+    private static String folderName;
+    private static String fileForDownload;
+    private static String status;
+    private static Path path;
+
 
     private ClientNet(Callback callback) {
       this.callback = callback;
-      buf = new byte[8192];
-     messageHandler = new MessageHandler();
         new Thread(() -> {
             EventLoopGroup group = new NioEventLoopGroup();
             try {
@@ -45,14 +46,9 @@ public class ClientNet {
                             protected void initChannel(SocketChannel ch) throws Exception {
                                 channel = ch;
                                 ch.pipeline().addLast(
-                                   //     new ObjectEncoder(),
-                                   //  new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                        new StringEncoder(),
-                                        new StringDecoder(),
-                                    //   messageHandler
-                                      //   new MessageHandler()
-                                        messageHandler
-                                   //     new ClientMessageHandler(callback)
+                                        new ObjectEncoder(),
+                                    new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                        new MessageHandler(callback)
                                 );
                             }
                         }).connect("localhost", 8189).sync();
@@ -64,77 +60,25 @@ public class ClientNet {
                 group.shutdownGracefully();
             }
         }).start();
-        Thread readThread = new Thread(() -> {
-            readMessages(messageHandler.getPos());
-        });
-        readThread.setDaemon(true);
-        readThread.start();
     }
 
 
-    public void sendMessage(String message) {
+    public void sendMessage(AbstractMessage message) {
         channel.writeAndFlush(message);
     }
 
-    protected void readMessages(PipedOutputStream pos) {
-        try {
-            pis = new PipedInputStream(pos);
-            while(true) {
-             //  try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(pis))) {
-                    int read = pis.read(buf);
-                    String msg = new String(buf, 0, read).trim();
-               //     String msg = bufferedReader.readLine();
-                    //     String msg = String.valueOf(pis.read());
-                callback.onReceive(msg);
-             //   }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public PipedInputStream getPis() {
-        return pis;
-    }
 
     public void authorizing() {
 
     }
 
-   /* public String readMessages(){
-        String msg ="";
-        while (true) {
-            msg = String.valueOf(channel.read());
-        }
-        return msg;
-    } */
-
-    public SocketChannel getChannel() {
-        return channel;
+    public String getFileForDownload() {
+        return fileForDownload;
     }
 
-
-    public MessageHandler getMessageHandler() {
-        return messageHandler;
+    public void setFileForDownload(String fileForDownload) {
+        this.fileForDownload = fileForDownload;
     }
-
- /*   public static String receiveMessage(String message) {
-        return message;
-    } */
-
-  /*  public String receiveMessage() {
-        return String.valueOf(channel.read());
-    } */
-
-    private void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-
 
     public static synchronized ClientNet getClientNet() {
         if(clientNet == null) {
@@ -151,26 +95,109 @@ public class ClientNet {
         return authorized;
     }
 
-    private synchronized static void handleMessage(String message) {
-      // System.out.println(message);
-       String[] strArray = message.split("\n");
-       for(int i = 0; i < strArray.length; i++) {
-           System.out.println(i+ ": " + strArray[i]);
-       }
-       if(strArray[0].equals("enter")) {
-           int quantityOfFiles = Integer.parseInt(strArray[1]);
-           if(quantityOfFiles > 0){
-               serverFileList = new ArrayList<>();
-               for(int i = 2; i < quantityOfFiles; i++) {
-                   serverFileList.add(strArray[i]);
-               }
-           }
-            authorized = true;
-           clientNet.sendMessage(String.valueOf(authorized));
-       }
-
-     //   System.out.println(message);
+    public static String getFolderName() {
+        return folderName;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setPath(Path path) {
+        this.path = path;
+    }
+
+    private synchronized static void handleMessage(AbstractMessage message) {
+        if(message instanceof AuthResponse) {
+            AuthResponse authResponse = (AuthResponse) message;
+            if(authResponse.isAuth() == true) {
+                authorized = true;
+            }
+        }
+
+        if(message instanceof FileListMessage) {
+            FileListMessage fileListMessage = (FileListMessage) message;
+            folderName = fileListMessage.getFolderName();
+            if(fileListMessage.getQuantityOfFiles() > 0) {
+                serverFileList = fileListMessage.getFileList();
+            } else {
+                serverFileList = new ArrayList<>();
+            }
+        }
+
+        if(message instanceof ConfirmStatusMessage) {
+            ConfirmStatusMessage confirmStatusMessage = (ConfirmStatusMessage) message;
+            status = confirmStatusMessage.getStatus();
+        }
+
+        if(message instanceof SendFileMessage) {
+            SendFileMessage sendFileMessage = (SendFileMessage) message;
+            saveFile(sendFileMessage);
+        }
+
+    }
+
+
+    public void sendFile(Path path) {
+        int bufSize = 1024;
+        long fileSize = 0;
+        byte[] buffer = new byte[bufSize];
+        try {
+            fileSize = Files.size(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int partNumber = 1;
+        int quantityOfParts = (int) fileSize / bufSize + 1;
+        String fileName = path.getFileName().toString();
+
+       try(FileInputStream fis = new FileInputStream(path.toString())) {
+           while(fis.read(buffer) != -1) {
+               if(partNumber == quantityOfParts) {
+                   sendMessage(new SendFileMessage(fileName, fileSize, buffer, true));
+               } else {
+                   sendMessage(new SendFileMessage(fileName, fileSize, buffer, false));
+                   partNumber++;
+                   buffer = new byte[bufSize];
+               }
+           }
+       } catch (Exception e){
+           e.printStackTrace();
+       }
+    }
+
+
+    private static void saveFile(SendFileMessage sendFileMessage) {
+        String fileName = sendFileMessage.getName();
+        Path newFile = Paths.get(path.toAbsolutePath() + "\\" + fileName);
+        if (Files.exists(newFile)) {
+            try {
+                long fileSize = Files.size(newFile);
+                if (fileSize >= sendFileMessage.getLength()) {
+                    newFile = Paths.get(path.toAbsolutePath() + "\\copy " + newFile.getFileName());
+                    if (Files.exists(newFile) && Files.size(newFile) >= sendFileMessage.getLength()) {
+                        while (true) {
+                            newFile = Paths.get(path.toAbsolutePath() + "\\copy " + newFile.getFileName());
+                            if (!Files.exists(newFile)) {
+                                newFile = Paths.get(path.toAbsolutePath() + "\\" + newFile.getFileName().toString().substring(5));
+                                break;
+                            }
+                        }
+                        long lastCopySize = Files.size(newFile);
+                        if (lastCopySize >= sendFileMessage.getLength()) {
+                            newFile = Paths.get(path.toAbsolutePath() + "\\copy " + newFile.getFileName());
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try (FileOutputStream fis = new FileOutputStream(newFile.toString(), true)) {
+            fis.write(sendFileMessage.getBuffer());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }

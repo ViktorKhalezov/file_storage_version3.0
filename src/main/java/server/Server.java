@@ -30,15 +30,9 @@ public class Server {
                         @Override
                         protected void initChannel(SocketChannel channel) throws Exception {
                             channel.pipeline().addLast(
-                               //     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                 //   new ObjectEncoder(),
-                                    new StringDecoder(),
-                                    new StringEncoder(),
+                                   new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                    new ObjectEncoder(),
                                     new ClientHandler()
-                                    // new MessageHandler()
-                                    //   new StringDecoder(),
-                                    //   new StringEncoder(),
-                                    //   new StringHandler()
                             );
                         }
                     }).bind(8189).sync();

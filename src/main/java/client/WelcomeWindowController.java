@@ -1,23 +1,25 @@
 package client;
 
+import common.AuthMessage;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-
-import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 
 public class WelcomeWindowController implements Initializable {
+
     private static final ClientNet clientNet = ClientNet.getClientNet();
-   // private String message;
+    private Stage stage;
+    private Scene scene;
+    private Parent root;
 
     @FXML
     public javafx.scene.control.TextField login;
@@ -25,38 +27,29 @@ public class WelcomeWindowController implements Initializable {
     @FXML
     public PasswordField password;
 
-    public Button enter;
-
-
- /*   public ClientNet getClientNet(){
-        return clientNet;
-    }
-
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return message;
-    } */
-
 
     public void enterButton(ActionEvent actionEvent) {
-        clientNet.sendMessage(login.getText());
+        AuthMessage authMessage = new AuthMessage(login.getText(), password.getText());
+        clientNet.sendMessage(authMessage);
+        new Thread(() -> {
             while (true) {
-                if(clientNet.isAuthorized() == true) {
+                if (clientNet.isAuthorized() == true && clientNet.getServerFileList() != null) {
                     break;
                 }
             }
+        }).start();
+        try {
+            Thread.currentThread().sleep(300);
+        } catch (InterruptedException exception) {
+            exception.printStackTrace();
+        }
+        if (clientNet.isAuthorized() == true && clientNet.getServerFileList() != null) {
             enterMainWindow();
-       }
+        }
 
-
-
-    public String readMessage(String message) {
-        return message;
     }
+
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -66,13 +59,10 @@ public class WelcomeWindowController implements Initializable {
 
     public void enterMainWindow() {
         try {
-            FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(AppStarter.class.getResource("/mainWindow.fxml"));
-            Pane mainWindow  = loader.load();
-            Stage stage = new Stage();
-            Scene scene = new Scene(mainWindow);
+            root = FXMLLoader.load(getClass().getResource("/mainWindow.fxml"));
+            stage = AppStarter.getPrimaryStage();
+            scene = new Scene(root);
             stage.setScene(scene);
-            stage.show();
         }catch (IOException e) {
             e.printStackTrace();
         }

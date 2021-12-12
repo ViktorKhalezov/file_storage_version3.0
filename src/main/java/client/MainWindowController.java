@@ -1,77 +1,96 @@
 package client;
 
-import io.netty.channel.socket.SocketChannel;
+
+import common.CheckStatusMessage;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
-import java.util.stream.Collectors;
+
 
 public class MainWindowController implements Initializable {
     private static final ClientNet clientNet = ClientNet.getClientNet();
+    private Stage stage;
+    private Scene scene;
+    private Parent root;
 
     @FXML
-    public ListView<String> serverFilesListView;
+    public Label currentFolder;
+
+    @FXML
+    public ListView<String> serverFileList;
 
 
-    public ListView<String> getServerFilesListView() {
-        return serverFilesListView;
+    public void fillListView() {
+        currentFolder.setText(clientNet.getFolderName());
+        ArrayList<String> fileList = clientNet.getServerFileList();
+        if (fileList.size() > 0) {
+            for (int i = 0; i < fileList.size(); i++) {
+                 serverFileList.getItems().add(fileList.get(i));
+            }
+        }
     }
+
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(URL location, ResourceBundle resources){
+        fillListView();
+        AppStarter.setPreviousWindow("mainWindow");
+        }
 
-        /*   ArrayList<String> fileList = clientNet.getServerFileList();
-
-        for(String file : fileList) {
-            serverFilesListView.getItems().add(file);
-        } */
-    }
-        // serverFilesListView = new ListView<>();
-
-
-    /*    //  net = WelcomeWindowController.clientNet;
-        FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(AppStarter.class.getResource("/com/geekbrains/file_storage/welcomeWindow.fxml"));
-     /*   try {
-            loader.load(getClass().getResource("/com/geekbrains/file_storage/welcomeWindow.fxml"));
+    public void uploadButton(ActionEvent actionEvent) {
+        try {
+            root = FXMLLoader.load(getClass().getResource("/uploadFileWindow.fxml"));
+            stage = AppStarter.getPrimaryStage();
+            scene = new Scene(root);
+            stage.setScene(scene);
         }catch (IOException e) {
             e.printStackTrace();
-        } */
- //      WelcomeWindowController controller = loader.getController();
-//     //   Parent root = fxmlLoader.load(getClass().getResource(path).openStream());
-     //   RootController controller = fxmlLoader.getController();
+        }
+    }
 
- //        for(int i = 0; i < 9; i++) {
- //       serverFilesListView.getItems().add(controller.getMessage());
-  //       }
-        /*  Path path = Paths.get("server_files");
-        int quantityOfFiles = 0;
+
+    public void downloadButton(ActionEvent actionEvent) {
+        String item = serverFileList.getSelectionModel().getSelectedItem();
+        clientNet.sendMessage(new CheckStatusMessage(item));
         try {
-            quantityOfFiles = Files.list(path).collect(Collectors.toList()).size();
-        if(quantityOfFiles > 0) {
-            List<String> fileList = Files.list(path).map(file -> String.valueOf(file.getFileName())).collect(Collectors.toList());
-            fileList.forEach(file -> serverFilesListView.getItems().add(file));
+            Thread.currentThread().sleep(300);
+        } catch (InterruptedException exception) {
+            exception.printStackTrace();
+        }
+        String status = clientNet.getStatus();
+       if(status != null) {
+        if(status.equals("isFile")) {
+           clientNet.setFileForDownload(item);
+           try {
+               root = FXMLLoader.load(getClass().getResource("/directoryForDownloadWindow.fxml"));
+               stage = AppStarter.getPrimaryStage();
+               scene = new Scene(root);
+               stage.setScene(scene);
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       } else {
+            try {
+                root = FXMLLoader.load(getClass().getResource("/isNotFileWindow.fxml"));
+                stage = AppStarter.getPrimaryStage();
+                scene = new Scene(root);
+                stage.setScene(scene);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } */
+        }
+       }
+    }
+
 
 }
-
- /* loader.setLocation(AppStarter.class.getResource("/com/geekbrains/file_storage/mainWindow.fxml"));
-        Pane mainWindow  = loader.load();
-        Stage stage = new Stage();
-        Scene scene = new Scene(mainWindow);
-        stage.setScene(scene); */

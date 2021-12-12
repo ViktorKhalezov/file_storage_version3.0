@@ -1,8 +1,9 @@
 package client;
 
 
+import common.AbstractMessage;
 
 public interface Callback {
 
-    void onReceive(String msg);
+    void onReceive(AbstractMessage msg);
 }

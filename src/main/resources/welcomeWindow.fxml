@@ -10,10 +10,10 @@
 
 <VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.WelcomeWindowController">
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="407.0" prefWidth="640.0" VBox.vgrow="ALWAYS">
-            <Button alignment="CENTER" layoutX="188.0" layoutY="331.0" mnemonicParsing="false" prefHeight="44.0" prefWidth="265.0" text="Регистрация" />
-            <Button onAction="#enterButton" alignment="CENTER" contentDisplay="CENTER" layoutX="214.0" layoutY="267.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="212.0" text="Войти" />
+            <Button alignment="CENTER" layoutX="189.0" layoutY="329.0" mnemonicParsing="false" prefHeight="44.0" prefWidth="265.0" text="Регистрация" />
+            <Button alignment="CENTER" contentDisplay="CENTER" layoutX="214.0" layoutY="267.0" mnemonicParsing="false" onAction="#enterButton" prefHeight="37.0" prefWidth="212.0" text="Войти" />
             <TextField fx:id="login" layoutX="263.0" layoutY="160.0" />
-             <PasswordField fx:id="password" layoutX="263.0" layoutY="210.0" />
+             <PasswordField fx:id="password" layoutX="263.0" layoutY="210.0" prefHeight="25.0" prefWidth="149.0" />
             <Label alignment="CENTER" contentDisplay="CENTER" layoutX="121.0" layoutY="7.0" prefHeight="57.0" prefWidth="400.0" text="Вас приветствует приложение File Storage" textAlignment="CENTER">
                <font>
                   <Font name="System Bold" size="18.0" />

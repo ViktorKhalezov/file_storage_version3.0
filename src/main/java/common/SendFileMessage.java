@@ -1,39 +1,42 @@
-package common;
+ package common;
 
-public class SendFileMessage extends AbstractMessage {
-    private String name;
-    private long length;
-    private byte[] buffer;
- //   private int partNumber;
-    private boolean lastPart;
+ public class SendFileMessage extends AbstractMessage {
+     private String name;
+     private String destinationPath;
+     private long length;
+     private byte[] buffer;
+  // private int partNumber;
+     private boolean lastPart;
 
 
-    public SendFileMessage(String name, long length, byte[] buffer, boolean lastPart) {
-        this.name = name;
-        this.length = length;
-        this.buffer = buffer;
-       // this.partNumber = partNumber;
-       this.lastPart = lastPart;
-    }
+     public SendFileMessage(String name, String destinationPath, long length, byte[] buffer, boolean lastPart) {
+         this.name = name;
+         this.destinationPath = destinationPath;
+         this.length = length;
+         this.buffer = buffer;
+        // this.partNumber = partNumber;
+        this.lastPart = lastPart;
+     }
 
-    public String getName() {
-        return name;
-    }
+     public String getName() {
+         return name;
+     }
 
-    public long getLength() {
-        return length;
-    }
+     public String getDestinationPath() {
+         return destinationPath;
+     }
 
-    public byte[] getBuffer() {
-        return buffer;
-    }
+     public long getLength() {
+         return length;
+     }
 
- /*   public int getPartNumber() {
-        return partNumber;
-    } */
+     public byte[] getBuffer() {
+         return buffer;
+     }
 
-    public boolean isLastPart() {
-        return lastPart;
-    }
-}
+     public boolean isLastPart() {
+         return lastPart;
+     }
+
+ }
 

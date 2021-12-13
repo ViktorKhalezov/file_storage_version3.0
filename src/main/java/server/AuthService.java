@@ -1,6 +1,6 @@
-package server;
+ package server;
 
-public class AuthService {
+ public class AuthService {
 
-}
+ }
 

@@ -1,8 +1,8 @@
-package common;
+ package common;
 
-import java.io.Serializable;
+ import java.io.Serializable;
 
-public class AbstractMessage implements Serializable {
+ public class AbstractMessage implements Serializable {
 
-}
+ }
 

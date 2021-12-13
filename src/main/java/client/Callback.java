@@ -1,10 +1,10 @@
-package client;
+  package client;
 
 
-import common.AbstractMessage;
+  import common.AbstractMessage;
 
-public interface Callback {
+  public interface Callback {
 
-    void onReceive(AbstractMessage msg);
-}
+      void onReceive(AbstractMessage msg);
+  }
 

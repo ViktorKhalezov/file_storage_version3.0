@@ -26,11 +26,14 @@ public class ClientNet {
     private static ClientNet clientNet;
     private static ArrayList<String> serverFileList;
     private static boolean authorized;
-    private static String folderName;
+    private static String serverFolderName;
     private static String fileForDownload;
     private static String status;
-    private static Path path;
-
+    private static String command;
+    private static String fileForRename;
+    private static String incorrectNameCommand;
+    private static Boolean operationConfirmed;
+ //   private static Path currentFolder;
 
     private ClientNet(Callback callback) {
       this.callback = callback;
@@ -71,12 +74,28 @@ public class ClientNet {
 
     }
 
+    public String getCommand() {
+        return command;
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
     public String getFileForDownload() {
         return fileForDownload;
     }
 
     public void setFileForDownload(String fileForDownload) {
         this.fileForDownload = fileForDownload;
+    }
+
+    public String getFileForRename() {
+        return fileForRename;
+    }
+
+    public void setFileForRename(String fileForRename) {
+        this.fileForRename = fileForRename;
     }
 
     public static synchronized ClientNet getClientNet() {
@@ -94,17 +113,37 @@ public class ClientNet {
         return authorized;
     }
 
-    public static String getFolderName() {
-        return folderName;
+    public static String getServerFolderName() {
+        return serverFolderName;
     }
 
     public String getStatus() {
         return status;
     }
 
-    public void setPath(Path path) {
-        this.path = path;
+    public String getIncorrectNameCommand() {
+        return incorrectNameCommand;
     }
+
+    public void setIncorrectNameCommand(String incorrectNameCommand) {
+        this.incorrectNameCommand = incorrectNameCommand;
+    }
+
+    public Boolean isOperationConfirmed() {
+        return operationConfirmed;
+    }
+
+    public void setOperationConfirmed(Boolean operationConfirmed) {
+        this.operationConfirmed = operationConfirmed;
+    }
+
+ /*   public Path getCurrentFolder() {
+        return currentFolder;
+    } */
+
+  /*  public void setCurrentFolder(Path path) {
+        this.currentFolder = currentFolder;
+    } */
 
     private synchronized static void handleMessage(AbstractMessage message) {
         if(message instanceof AuthResponse) {
@@ -116,12 +155,9 @@ public class ClientNet {
 
         if(message instanceof FileListMessage) {
             FileListMessage fileListMessage = (FileListMessage) message;
-            folderName = fileListMessage.getFolderName();
-            if(fileListMessage.getQuantityOfFiles() > 0) {
-                serverFileList = fileListMessage.getFileList();
-            } else {
-                serverFileList = new ArrayList<>();
-            }
+            serverFolderName = fileListMessage.getFolderName();
+            serverFileList = fileListMessage.getFileList();
+
         }
 
         if(message instanceof ConfirmStatusMessage) {
@@ -134,10 +170,16 @@ public class ClientNet {
             saveFile(sendFileMessage);
         }
 
+        if(message instanceof OperationConfirmMessage) {
+            OperationConfirmMessage operationConfirmMessage = (OperationConfirmMessage) message;
+           operationConfirmed = operationConfirmMessage.isOperationConfirmed();
+        }
+
     }
 
 
     public void sendFile(Path path) {
+        String destinationPath = serverFolderName;
         int bufSize = 1024;
         long fileSize = 0;
         byte[] buffer = new byte[bufSize];
@@ -153,9 +195,9 @@ public class ClientNet {
        try(FileInputStream fis = new FileInputStream(path.toString())) {
            while(fis.read(buffer) != -1) {
                if(partNumber == quantityOfParts) {
-                   sendMessage(new SendFileMessage(fileName, fileSize, buffer, true));
+                   sendMessage(new SendFileMessage(fileName, destinationPath, fileSize, buffer, partNumber));
                } else {
-                   sendMessage(new SendFileMessage(fileName, fileSize, buffer, false));
+                   sendMessage(new SendFileMessage(fileName, destinationPath, fileSize, buffer, partNumber));
                    partNumber++;
                    buffer = new byte[bufSize];
                }
@@ -168,23 +210,24 @@ public class ClientNet {
 
     private static void saveFile(SendFileMessage sendFileMessage) {
         String fileName = sendFileMessage.getName();
-        Path newFile = Paths.get(path.toAbsolutePath() + "\\" + fileName);
+        String destinationPath = sendFileMessage.getDestinationPath();
+        Path newFile = Paths.get(destinationPath + "\\" + fileName);
         if (Files.exists(newFile)) {
             try {
                 long fileSize = Files.size(newFile);
                 if (fileSize >= sendFileMessage.getLength()) {
-                    newFile = Paths.get(path.toAbsolutePath() + "\\copy " + newFile.getFileName());
+                    newFile = Paths.get(destinationPath + "\\copy " + newFile.getFileName());
                     if (Files.exists(newFile) && Files.size(newFile) >= sendFileMessage.getLength()) {
                         while (true) {
-                            newFile = Paths.get(path.toAbsolutePath() + "\\copy " + newFile.getFileName());
+                            newFile = Paths.get(destinationPath + "\\copy " + newFile.getFileName());
                             if (!Files.exists(newFile)) {
-                                newFile = Paths.get(path.toAbsolutePath() + "\\" + newFile.getFileName().toString().substring(5));
+                                newFile = Paths.get(destinationPath + "\\" + newFile.getFileName().toString().substring(5));
                                 break;
                             }
                         }
                         long lastCopySize = Files.size(newFile);
                         if (lastCopySize >= sendFileMessage.getLength()) {
-                            newFile = Paths.get(path.toAbsolutePath() + "\\copy " + newFile.getFileName());
+                            newFile = Paths.get(destinationPath + "\\copy " + newFile.getFileName());
                         }
                     }
                 }

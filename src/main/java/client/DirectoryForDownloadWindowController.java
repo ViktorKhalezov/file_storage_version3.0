@@ -51,7 +51,12 @@ public class DirectoryForDownloadWindowController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        path = Paths.get("client_files");
+        if(AppStarter.getCurrentFolder() == null) {
+            path = Paths.get("client_files");
+            AppStarter.setCurrentFolder(path.toAbsolutePath());
+        } else {
+            path = AppStarter.getCurrentFolder();
+        }
         currentFolder.setText(path.toAbsolutePath().toString());
         fillListView(path);
         AppStarter.setPreviousWindow("downloadWindow");
@@ -59,6 +64,7 @@ public class DirectoryForDownloadWindowController implements Initializable {
 
     public void directoryUpButton(ActionEvent actionEvent) {
         path = path.toAbsolutePath().getParent();
+        AppStarter.setCurrentFolder(path);
         currentFolder.setText(path.toString());
         fileList.getItems().clear();
         fillListView(path);
@@ -70,6 +76,7 @@ public class DirectoryForDownloadWindowController implements Initializable {
         if(Files.isDirectory(pathToItem)) {
             path = pathToItem;
             currentFolder.setText(path.toString());
+            AppStarter.setCurrentFolder(path);
             fileList.getItems().clear();
             fillListView(pathToItem);
         } else {
@@ -93,12 +100,13 @@ public class DirectoryForDownloadWindowController implements Initializable {
         }catch (IOException e) {
             e.printStackTrace();
         }
+        AppStarter.setCurrentFolder(null);
+        clientNet.setFileForDownload(null);
     }
 
     public void downloadButton(ActionEvent actionEvent) {
         String fileName = clientNet.getFileForDownload();
-        clientNet.setPath(path);
-        clientNet.sendMessage(new DownloadRequestMessage(fileName));
+        clientNet.sendMessage(new DownloadRequestMessage(fileName, path.toAbsolutePath().toString()));
         try {
             Thread.currentThread().sleep(200);
         } catch (InterruptedException exception) {

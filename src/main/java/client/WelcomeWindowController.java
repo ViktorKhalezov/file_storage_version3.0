@@ -33,20 +33,17 @@ public class WelcomeWindowController implements Initializable {
         clientNet.sendMessage(authMessage);
         new Thread(() -> {
             while (true) {
-                if (clientNet.isAuthorized() == true && clientNet.getServerFileList() != null) {
+                if (clientNet.isAuthorized() == true) {
                     break;
                 }
             }
         }).start();
         try {
-            Thread.currentThread().sleep(300);
+            Thread.currentThread().sleep(200);
         } catch (InterruptedException exception) {
             exception.printStackTrace();
         }
-        if (clientNet.isAuthorized() == true && clientNet.getServerFileList() != null) {
             enterMainWindow();
-        }
-
     }
 
 

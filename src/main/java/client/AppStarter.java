@@ -6,13 +6,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.nio.file.Path;
 
 
 public class AppStarter extends Application {
 
     private static Stage primaryStage;
     private static String previousWindow;
-
+    private static Path currentFolder;
 
 
     @Override
@@ -34,6 +35,14 @@ public class AppStarter extends Application {
 
     public static void setPreviousWindow(String window) {
         previousWindow = window;
+    }
+
+    public static Path getCurrentFolder() {
+        return currentFolder;
+    }
+
+    public static void setCurrentFolder(Path folder) {
+        currentFolder = folder;
     }
 
 }

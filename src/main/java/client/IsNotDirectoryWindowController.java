@@ -16,7 +16,7 @@ public class IsNotDirectoryWindowController implements Initializable {
     private Parent root;
 
 
-    public void окButton(ActionEvent actionEvent) {
+    public void оkButton(ActionEvent actionEvent) {
         try {
             if(AppStarter.getPreviousWindow().equals("mainWindow")) {
                 root = FXMLLoader.load(getClass().getResource("/mainWindow.fxml"));

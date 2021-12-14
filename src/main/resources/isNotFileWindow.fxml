@@ -13,7 +13,7 @@
                   <Font size="14.0" />
                </font>
             </Label>
-            <Button layoutX="288.0" layoutY="235.0" mnemonicParsing="false" onAction="#окButton" prefHeight="39.0" prefWidth="65.0" text="ОК" />
+            <Button layoutX="288.0" layoutY="235.0" mnemonicParsing="false" onAction="#оkButton" prefHeight="39.0" prefWidth="65.0" text="ОК" />
          </children>
     </AnchorPane>
   </children>

@@ -50,7 +50,12 @@ public class UploadWindowController implements Initializable {
 
         @Override
     public void initialize(URL location, ResourceBundle resources) {
-        path = Paths.get("client_files");
+            if(AppStarter.getCurrentFolder() == null) {
+                path = Paths.get("client_files");
+                AppStarter.setCurrentFolder(path.toAbsolutePath());
+            } else {
+                path = AppStarter.getCurrentFolder();
+            }
         currentFolder.setText(path.toAbsolutePath().toString());
         fillListView(path);
         AppStarter.setPreviousWindow("uploadWindow");
@@ -58,6 +63,7 @@ public class UploadWindowController implements Initializable {
 
     public void directoryUpButton(ActionEvent actionEvent) {
         path = path.toAbsolutePath().getParent();
+        AppStarter.setCurrentFolder(path);
         currentFolder.setText(path.toString());
         fileList.getItems().clear();
         fillListView(path);
@@ -68,6 +74,7 @@ public class UploadWindowController implements Initializable {
         Path pathToItem = Paths.get(path.toAbsolutePath() + "\\" + item);
         if(Files.isDirectory(pathToItem)) {
             path = pathToItem;
+            AppStarter.setCurrentFolder(path);
             currentFolder.setText(path.toString());
             fileList.getItems().clear();
             fillListView(pathToItem);
@@ -92,6 +99,7 @@ public class UploadWindowController implements Initializable {
         }catch (IOException e) {
             e.printStackTrace();
         }
+        AppStarter.setCurrentFolder(null);
     }
 
     public void uploadButton(ActionEvent actionEvent) {
